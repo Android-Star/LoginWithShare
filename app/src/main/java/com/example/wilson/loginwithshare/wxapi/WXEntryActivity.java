@@ -8,16 +8,23 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.wilson.loginwithshare.base.Config;
+import com.example.wilson.loginwithshare.entity.WXAccessTokenEntity;
+import com.example.wilson.loginwithshare.entity.WXBaseRespEntity;
+import com.example.wilson.loginwithshare.entity.WXUserInfo;
+import com.google.gson.Gson;
 import com.tencent.mm.opensdk.modelbase.BaseReq;
 import com.tencent.mm.opensdk.modelbase.BaseResp;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.IWXAPIEventHandler;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.StringCallback;
 
 public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
 
     /**
-     * Î¢ĞÅµÇÂ¼Ïà¹Ø
+     * å¾®ä¿¡ç™»å½•ç›¸å…³
      */
     private IWXAPI api;
     private static final String WEICHAT_APP_ID = "wxd930ea5d5a258f4f";
@@ -26,17 +33,18 @@ public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Í¨¹ıWXAPIFactory¹¤³§»ñÈ¡IWXApIµÄÊ¾Àı
+        //é€šè¿‡WXAPIFactoryå·¥å‚è·å–IWXApIçš„ç¤ºä¾‹
         api = WXAPIFactory.createWXAPI(this, WEICHAT_APP_ID, true);
-        //½«Ó¦ÓÃµÄappid×¢²áµ½Î¢ĞÅ
+        //å°†åº”ç”¨çš„appidæ³¨å†Œåˆ°å¾®ä¿¡
         api.registerApp(WEICHAT_APP_ID);
         Log.d("------------------------------------", "");
-        //×¢Òâ£º
-        //µÚÈı·½¿ª·¢ÕßÈç¹ûÊ¹ÓÃÍ¸Ã÷½çÃæÀ´ÊµÏÖWXEntryActivity£¬ĞèÒªÅĞ¶ÏhandleIntentµÄ·µ»ØÖµ£¬Èç¹û·µ»ØÖµÎªfalse£¬ÔòËµÃ÷Èë²Î²»ºÏ·¨Î´±»SDK´¦Àí£¬Ó¦finishµ±Ç°Í¸Ã÷½çÃæ£¬±ÜÃâÍâ²¿Í¨¹ı´«µİ·Ç·¨²ÎÊıµÄIntentµ¼ÖÂÍ£ÁôÔÚÍ¸Ã÷½çÃæ£¬ÒıÆğÓÃ»§µÄÒÉ»ó
+        //æ³¨æ„ï¼š
+        //ç¬¬ä¸‰æ–¹å¼€å‘è€…å¦‚æœä½¿ç”¨é€æ˜ç•Œé¢æ¥å®ç°WXEntryActivityï¼Œéœ€è¦åˆ¤æ–­handleIntentçš„è¿”å›å€¼ï¼Œå¦‚æœè¿”å›å€¼ä¸ºfalseï¼Œ
+        // åˆ™è¯´æ˜å…¥å‚ä¸åˆæ³•æœªè¢«SDKå¤„ç†ï¼Œåº”finishå½“å‰é€æ˜ç•Œé¢ï¼Œé¿å…å¤–éƒ¨é€šè¿‡ä¼ é€’éæ³•å‚æ•°çš„Intentå¯¼è‡´åœç•™åœ¨é€æ˜ç•Œé¢ï¼Œå¼•èµ·ç”¨æˆ·çš„ç–‘æƒ‘
         try {
             boolean result = api.handleIntent(getIntent(), this);
             if (!result) {
-                Log.d("------------------------------------", "²ÎÊı²»ºÏ·¨£¬Î´±»SDK´¦Àí£¬ÍË³ö");
+                Log.d("------------------------------------", "å‚æ•°ä¸åˆæ³•ï¼Œæœªè¢«SDKå¤„ç†ï¼Œé€€å‡º");
                 finish();
             }
         } catch (Exception e) {
@@ -69,28 +77,89 @@ public class WXEntryActivity extends Activity implements IWXAPIEventHandler {
         Log.d("baseResp:", baseResp.toString());
         Log.d("baseResp:", baseResp.errStr + "," + baseResp.openId + "," + baseResp.transaction + "," + baseResp.errCode);
         String result = "";
+        WXBaseRespEntity entity = new Gson().fromJson(new Gson().toJson(baseResp), WXBaseRespEntity.class);
         switch (baseResp.errCode) {
             case BaseResp.ErrCode.ERR_OK:
-                result = "·¢ËÍ³É¹¦";
+                result = "å‘é€æˆåŠŸ";
 //                showMsg(1, result);
-                finish();
+                OkHttpUtils.get().url("https://api.weixin.qq.com/sns/oauth2/access_token")
+                        .addParams("appid", Config.APP_ID_WX)
+                        .addParams("secret", Config.APP_SECRET_WX)
+                        .addParams("code", entity.getCode())
+                        .addParams("grant_type", "authorization_code")
+                        .build()
+                        .execute(new StringCallback() {
+                            @Override
+                            public void onError(okhttp3.Call call, Exception e, int id) {
+                                Log.d("wechatlogin", "è¯·æ±‚é”™è¯¯..");
+                                finish();
+                            }
+
+                            @Override
+                            public void onResponse(String response, int id) {
+                                Log.d("wechatlogin", "response:" + response);
+                                WXAccessTokenEntity accessTokenEntity = new Gson().fromJson(response, WXAccessTokenEntity.class);
+                                if (accessTokenEntity != null) {
+                                    getUserInfo(accessTokenEntity);
+                                } else {
+                                    Log.d("wechatlogin", "è·å–å¤±è´¥");
+                                    finish();
+                                }
+                            }
+                        });
                 break;
             case BaseResp.ErrCode.ERR_USER_CANCEL:
-                result = "·¢ËÍÈ¡Ïû";
+                result = "å‘é€å–æ¶ˆ";
 //                showMsg(2, result);
                 finish();
                 break;
             case BaseResp.ErrCode.ERR_AUTH_DENIED:
-                result = "·¢ËÍ±»¾Ü¾ø";
+                result = "å‘é€è¢«æ‹’ç»";
 //                showMsg(1, result);
                 finish();
                 break;
             default:
-                result = "·¢ËÍ·µ»Ø";
+                result = "å‘é€è¿”å›";
 //                showMsg(0, result);
                 finish();
                 break;
         }
         Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * è·å–ä¸ªäººä¿¡æ¯
+     *
+     * @param accessTokenEntity
+     */
+    private void getUserInfo(WXAccessTokenEntity accessTokenEntity) {
+        //https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID
+        OkHttpUtils.get()
+                .url("https://api.weixin.qq.com/sns/userinfo")
+                .addParams("access_token", accessTokenEntity.getAccess_token())
+                .addParams("openid", accessTokenEntity.getOpenid())//openid:æˆæƒç”¨æˆ·å”¯ä¸€æ ‡è¯†
+                .build()
+                .execute(new StringCallback() {
+                    @Override
+                    public void onError(okhttp3.Call call, Exception e, int id) {
+                        Log.d("wechatlogin", "è·å–é”™è¯¯..");
+                        finish();
+                    }
+
+                    @Override
+                    public void onResponse(String response, int id) {
+                        Log.d("wechatlogin", "userInfo:" + response);
+                        WXUserInfo wxResponse = new Gson().fromJson(response, WXUserInfo.class);
+                        Log.d("wechatlogin", "å¾®ä¿¡ç™»å½•èµ„æ–™å·²è·å–ï¼Œåç»­æœªå®Œæˆ");
+                        String headUrl = wxResponse.getHeadimgurl();
+                        String name = wxResponse.getNickname();
+                        Log.d("wechatlogin", "å¤´åƒUrl:" + headUrl);
+                        Intent intent = getIntent();
+                        intent.putExtra("headUrl", headUrl);
+                        intent.putExtra("nickname", name);
+                        WXEntryActivity.this.setResult(0, intent);
+                        finish();
+                    }
+                });
     }
 }

@@ -93,8 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 QQActivity.start(MainActivity.this, null);
                 break;
             case R.id.tv_wechat:
-
-
+                WechatActivity.start(MainActivity.this, null);
                 break;
         }
     }

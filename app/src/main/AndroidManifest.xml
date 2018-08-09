@@ -56,6 +56,7 @@
 
         <activity android:name=".SinaActivity" />
         <activity android:name=".QQActivity" />
+        <activity android:name=".WechatActivity" />
     </application>
 
 </manifest>
