@@ -15,12 +15,12 @@ public class Config {
     /**
      * app_id是从微信官网申请到的合法APPid
      */
-    public static final String APP_ID_WX = "wxb363a9ff53731258";
+    public static final String APP_ID_WX = "wxcae1c430ce4b63a6";
 
     /**
      * 微信AppSecret值
      */
-    public static final String APP_SECRET_WX = "2b0d0325bb7c8383bff52e0900b7f56c";
+    public static final String APP_SECRET_WX = "bb2eec4a4eae2335cc6d6fc023c71577";
 
     /**
      * 新浪微博
