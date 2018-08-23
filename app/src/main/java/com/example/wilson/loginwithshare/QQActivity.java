@@ -281,7 +281,7 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 break;
             case R.id.tv_qq_shareimage:
                 QQUtils.getInstance(QQActivity.this).shareImageToQ(
-                        "/storage/emulated/0/DCIM/banban/shotcut_1533029275662.jpg",
+                        getExternalFilesDir(null) + "/aaa.jpg",
                         "go",
                         false,
                         null,

@@ -66,7 +66,8 @@ public class WechatUtils {
      * @return true安装, false未安装
      */
     public boolean isWeChatAppInstalled(Context context) {
-        if (api.isWXAppInstalled() && api.isWXAppSupportAPI()) {
+//        if (api.isWXAppInstalled() && api.isWXAppSupportAPI()) {
+        if (api.isWXAppInstalled()) {
             return true;
         } else {
             final PackageManager packageManager = context.getPackageManager();// 获取packagemanager
@@ -81,6 +82,30 @@ public class WechatUtils {
             }
             return false;
         }
+    }
+
+    /**
+     * @param title       分享的标题
+     * @param openUrl     点击分享item打开的网页地址url
+     * @param description 网页的描述
+     * @param icon        分享item的图片
+     * @param scene       0表示为分享到微信好友  1表示为分享到朋友圈 2表示微信收藏
+     */
+    public void sendToWeiXin(String title, String openUrl, String description, Bitmap icon, int scene) {
+        //初始化一个WXWebpageObject对象，填写url
+        WXWebpageObject webpage = new WXWebpageObject();
+        webpage.webpageUrl = openUrl;
+        //Y用WXWebpageObject对象初始化一个WXMediaMessage对象，填写标题、描述
+        WXMediaMessage msg = new WXMediaMessage(webpage);
+        msg.title = title;//网页标题
+        msg.description = description;//网页描述
+        msg.setThumbImage(icon);
+        //构建一个Req
+        SendMessageToWX.Req req = new SendMessageToWX.Req();
+        req.transaction = "supplier";
+        req.message = msg;
+        req.scene = scene;
+        api.sendReq(req);
     }
 
     /**
