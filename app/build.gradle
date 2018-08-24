@@ -43,5 +43,5 @@ dependencies {
     //qq
 //    implementation files('libs/open_sdk_r6008_lite.jar')
     //微信
-    implementation 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:+'
+    implementation 'com.tencent.mm.opensdk:wechat-sdk-android-without-mta:5.1.4'
 }

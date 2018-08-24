@@ -66,8 +66,7 @@ public class WechatUtils {
      * @return true安装, false未安装
      */
     public boolean isWeChatAppInstalled(Context context) {
-//        if (api.isWXAppInstalled() && api.isWXAppSupportAPI()) {
-        if (api.isWXAppInstalled()) {
+        if (api.isWXAppInstalled() && api.isWXAppSupportAPI()) {
             return true;
         } else {
             final PackageManager packageManager = context.getPackageManager();// 获取packagemanager
