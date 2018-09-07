@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
+import com.sina.weibo.sdk.utils.LogUtil;
 import com.tencent.connect.auth.QQToken;
 import com.tencent.connect.share.QQShare;
 import com.tencent.connect.share.QzonePublish;
@@ -25,46 +26,49 @@ public class QQUtils {
 
     private static QQUtils instance;
     private Tencent mTencent;
-    private Activity context;
 
     private int shareType;
     private Handler mManinHandler;
     private static Object mMainHandlerLock = new Object();
 
 
-    public static QQUtils getInstance(Activity context) {
+    public static QQUtils getInstance() {
         if (instance == null) {
-            instance = new QQUtils(context);
+            instance = new QQUtils();
         }
         return instance;
     }
 
-    public QQUtils(Activity mContext) {
-        this.context = mContext;
-    }
-
-    public void qqLogin(String scope, IUiListener listener) {
+    public void qqLogin(Activity activity, String scope, IUiListener listener) {
         if (mTencent == null) {
-            mTencent = Tencent.createInstance(QQ_APP_ID, context);
+            mTencent = Tencent.createInstance(QQ_APP_ID, activity);
         }
-        mTencent.login(context, scope, listener);
+        if (mTencent.isSessionValid()) {
+            qqLogout(activity);
+        }
+        mTencent.login(activity, scope, listener);
     }
 
-    public void qqLogout() {
-        if (mTencent != null) {
-            mTencent.logout(context);
+    /**
+     * 退出登陆
+     */
+    public void qqLogout(Activity activity) {
+        if (null != mTencent && mTencent.isSessionValid()) {
+            LogUtil.e("logout", "退出登陆");
+            mTencent.logout(activity);
         }
     }
 
-    public void setAccessTokenWithId(String token, String expires,String openId) {
-        mTencent.setAccessToken(token, expires);
-        mTencent.setOpenId(openId);
+    public void setAccessTokenWithId(String token, String expires, String openId) {
+        if (null != mTencent){
+            mTencent.setAccessToken(token, expires);
+            mTencent.setOpenId(openId);
+        }
     }
 
     public QQToken getQQToken(){
         return mTencent.getQQToken();
     }
-
 
     /**
      * 分享图文消息
@@ -76,7 +80,7 @@ public class QQUtils {
      * @param appName       手Q客户端顶部，替换“返回”按钮文字，如果为空，用返回代替
      * @param shareListener 分享结果回调
      */
-    public void shareImageTextToQ(
+    public void shareImageTextToQ(final Activity context,
             String title,
             String targetUrl,
             String summary,
@@ -115,7 +119,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.shareToQQ(context, params, shareListener);
             }
@@ -130,7 +134,7 @@ public class QQUtils {
      * @param appName
      * @param shareListener
      */
-    public void shareImageToQ(
+    public void shareImageToQ(final Activity context,
             String imageUrl,
             String appName,
             boolean showZoneDialog,
@@ -162,7 +166,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.shareToQQ(context, params, shareListener);
             }
@@ -180,7 +184,7 @@ public class QQUtils {
      * @param audioUrl      音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
      * @param shareListener
      */
-    public void shareMusicToQ(
+    public void shareMusicToQ(final Activity context,
             String title,
             String targetUrl,
             String summary,
@@ -221,7 +225,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.shareToQQ(context, params, shareListener);
             }
@@ -238,7 +242,7 @@ public class QQUtils {
      * @param appName
      * @param shareListener
      */
-    public void shareApplicationToQ(
+    public void shareApplicationToQ(final Activity context,
             String title,
             String targetUrl,
             String summary,
@@ -276,7 +280,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.shareToQQ(context, params, shareListener);
             }
@@ -289,10 +293,10 @@ public class QQUtils {
      * @param title         分享的标题, 最长30个字符
      * @param targetUrl     这条分享消息被好友点击后的跳转URL
      * @param summary       分享的消息摘要，最长40个字 (选填)
-     * @param imageUrls     分享的图片, 以ArrayList<String>的类型传入，以便支持多张图片（注：图片最多支持9张图片，多余的图片会被丢弃）
+     * @param imageUrls     分享的图片, 以ArrayList<String>的类型传入，以便支持多张图片（注：图片最多支持9张图片，多余的图片会被丢弃.只支持本地图片）
      * @param shareListener 分享结果回调
      */
-    public void shareImageTextToQzone(
+    public void shareImageTextToQzone(final Activity context,
             String title,
             String targetUrl,
             String summary,
@@ -315,7 +319,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.shareToQzone(context, params, shareListener);
             }
@@ -330,7 +334,7 @@ public class QQUtils {
      * @param summary       说说正文
      * @param shareListener
      */
-    public void shareImageToQzone(
+    public void shareImageToQzone(final Activity context,
             String summary,
             ArrayList<String> imageUrls,
             final IUiListener shareListener) {
@@ -348,7 +352,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.publishToQzone(context, params, shareListener);
             }
@@ -360,7 +364,7 @@ public class QQUtils {
      *
      * @param videoUrl 发表的视频，只支持本地地址，发表视频时必填；上传视频的大小最好控制在100M以内（因为QQ普通用户上传视频必须在100M以内，黄钻用户可上传1G以内视频，大于1G会直接报错。）
      */
-    public void shareVideoToQzone(
+    public void shareVideoToQzone(final Activity context,
             String summary,
             String videoUrl,
             final IUiListener shareListener
@@ -378,7 +382,7 @@ public class QQUtils {
             @Override
             public void run() {
                 if (null == mTencent) {
-                    mTencent = Tencent.createInstance(QQ_APP_ID, context);
+                    mTencent = Tencent.createInstance(QQ_APP_ID, context.getApplicationContext());
                 }
                 mTencent.publishToQzone(context, params, shareListener);
             }
