@@ -180,7 +180,7 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
             String openId = jsonObject.getString(Constants.PARAM_OPEN_ID);
             if (!TextUtils.isEmpty(token) && !TextUtils.isEmpty(expires)
                     && !TextUtils.isEmpty(openId)) {
-                QQUtils.getInstance(QQActivity.this).setAccessTokenWithId(token, expires, openId);
+                QQUtils.getInstance().setAccessTokenWithId(token, expires, openId);
                 QQ_uid = openId;
             }
         } catch (Exception e) {
@@ -207,7 +207,7 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 Toast.makeText(QQActivity.this, "登录取消", Toast.LENGTH_SHORT).show();
             }
         };
-        userInfo = new UserInfo(this, QQUtils.getInstance(QQActivity.this).getQQToken());
+        userInfo = new UserInfo(this, QQUtils.getInstance().getQQToken());
         userInfo.getUserInfo(listener);
     }
 
@@ -227,7 +227,7 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 }
             }
             if (path != null) {
-                QQUtils.getInstance(QQActivity.this).shareVideoToQzone("哈哈", path, qqShareListener);
+                QQUtils.getInstance().shareVideoToQzone(QQActivity.this,"哈哈", path, qqShareListener);
             } else {
                 Toast.makeText(QQActivity.this, "请重新选择视频", Toast.LENGTH_LONG).show();
             }
@@ -245,9 +245,9 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                     imageUrls.add(path);
                 }
                 if (isShareImageToz) {
-                    QQUtils.getInstance(QQActivity.this).shareImageToQzone("纯图片", imageUrls, qqShareListener);
+                    QQUtils.getInstance().shareImageToQzone(QQActivity.this,"纯图片", imageUrls, qqShareListener);
                 } else {
-                    QQUtils.getInstance(QQActivity.this).shareImageTextToQzone("图文分享", "http://www.qq.com", "哈哈", imageUrls, qqShareListener);
+                    QQUtils.getInstance().shareImageTextToQzone(QQActivity.this,"图文分享", "http://www.qq.com", "哈哈", imageUrls, qqShareListener);
                 }
 
             } else {
@@ -265,10 +265,11 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.tv_qq_login:
-                QQUtils.getInstance(QQActivity.this).qqLogin(QQ_SCOPE_ALL, qqLoginListener);
+                QQUtils.getInstance().qqLogin(QQActivity.this,QQ_SCOPE_ALL, qqLoginListener);
                 break;
             case R.id.tv_qq_shareimagetext:
-                QQUtils.getInstance(QQActivity.this).shareImageTextToQ(
+                QQUtils.getInstance().shareImageTextToQ(
+                        QQActivity.this,
                         "标题",
                         "http://www.qq.com/",
                         "副标题",
@@ -280,7 +281,8 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 );
                 break;
             case R.id.tv_qq_shareimage:
-                QQUtils.getInstance(QQActivity.this).shareImageToQ(
+                QQUtils.getInstance().shareImageToQ(
+                        QQActivity.this,
                         getExternalFilesDir(null) + "/aaa.jpg",
                         "go",
                         false,
@@ -289,7 +291,8 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 );
                 break;
             case R.id.tv_qq_shareaudio:
-                QQUtils.getInstance(QQActivity.this).shareMusicToQ(
+                QQUtils.getInstance().shareMusicToQ(
+                        QQActivity.this,
                         "酷秀",
                         "http://c.y.qq.com/v8/playsong.html?songid=109325260&songmid=000kuo2H2xJqfA&songtype=0&source=mqq&_wv=1",
                         "乔紫乔",
@@ -302,7 +305,8 @@ public class QQActivity extends AppCompatActivity implements View.OnClickListene
                 );
                 break;
             case R.id.tv_qq_shareapp:
-                QQUtils.getInstance(QQActivity.this).shareApplicationToQ(
+                QQUtils.getInstance().shareApplicationToQ(
+                        QQActivity.this,
                         "酷秀分享",
                         "http://url.cn/424xgot",
                         "办公|57.4MB|785万次下载|4.6/5星",
