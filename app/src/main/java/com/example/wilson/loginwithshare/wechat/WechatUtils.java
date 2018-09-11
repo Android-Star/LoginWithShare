@@ -143,7 +143,7 @@ public class WechatUtils {
             if (bitmap == null)
                 return;
             //初始化一个WXWebpageObject对象，填写url
-            WXImageObject imageObject = new WXImageObject();
+            WXImageObject imageObject = new WXImageObject(bitmap);
 
             //Y用WXWebpageObject对象初始化一个WXMediaMessage对象，
             WXMediaMessage msg = new WXMediaMessage(imageObject);
