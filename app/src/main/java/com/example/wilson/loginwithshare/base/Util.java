@@ -11,6 +11,8 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -147,20 +149,51 @@ public class Util {
     }
 
     public static byte[] bmpToByteArray(final Bitmap bmp, final boolean needRecycle) {
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		bmp.compress(CompressFormat.PNG, 100, output);
-		if (needRecycle) {
-			bmp.recycle();
+		int i;
+		int j;
+		if (bmp.getHeight() > bmp.getWidth()) {
+			i = bmp.getWidth();
+			j = bmp.getWidth();
+		} else {
+			i = bmp.getHeight();
+			j = bmp.getHeight();
 		}
-		
-		byte[] result = output.toByteArray();
-		try {
-			output.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+
+		Bitmap localBitmap = Bitmap.createBitmap(i, j, Bitmap.Config.RGB_565);
+		Canvas localCanvas = new Canvas(localBitmap);
+
+		while (true) {
+			localCanvas.drawBitmap(bmp, new Rect(0, 0, i, j), new Rect(0, 0,i, j), null);
+			if (needRecycle)
+				bmp.recycle();
+			ByteArrayOutputStream localByteArrayOutputStream = new ByteArrayOutputStream();
+			localBitmap.compress(Bitmap.CompressFormat.JPEG, 100,
+					localByteArrayOutputStream);
+			localBitmap.recycle();
+			byte[] arrayOfByte = localByteArrayOutputStream.toByteArray();
+			try {
+				localByteArrayOutputStream.close();
+				return arrayOfByte;
+			} catch (Exception e) {
+				//F.out(e);
+			}
+			i = bmp.getHeight();
+			j = bmp.getHeight();
 		}
-		
-		return result;
+//		ByteArrayOutputStream output = new ByteArrayOutputStream();
+//		bmp.compress(CompressFormat.PNG, 100, output);
+//		if (needRecycle) {
+//			bmp.recycle();
+//		}
+//
+//		byte[] result = output.toByteArray();
+//		try {
+//			output.close();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//
+//		return result;
 	}
 	
 	public static byte[] getHtmlByteArray(final String url) {
