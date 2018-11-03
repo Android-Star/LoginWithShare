@@ -98,7 +98,7 @@ public class WechatUtils {
         WXMediaMessage msg = new WXMediaMessage(webpage);
         msg.title = title;//网页标题
         msg.description = description;//网页描述
-        msg.setThumbImage(icon);
+        msg.setThumbImage(Bitmap.createScaledBitmap(icon, THUMB_SIZE, THUMB_SIZE, true));
         //构建一个Req
         SendMessageToWX.Req req = new SendMessageToWX.Req();
         req.transaction = "supplier";
