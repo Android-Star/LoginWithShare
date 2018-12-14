@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.example.wilson.loginwithshare.base.Util;
@@ -19,6 +22,15 @@ import com.tencent.mm.opensdk.modelmsg.WXWebpageObject;
 import com.tencent.mm.opensdk.openapi.IWXAPI;
 import com.tencent.mm.opensdk.openapi.WXAPIFactory;
 
+import junit.framework.Assert;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import static com.example.wilson.loginwithshare.base.Config.APP_ID_WX;
@@ -292,5 +304,156 @@ public class WechatUtils {
             Toast.makeText(context, "请安装微信后重试", Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+
+    /**
+     * 根据一个网络连接(String)获取bitmap图像
+     *
+     * @param imageUri
+     * @return
+     * @throws MalformedURLException
+     */
+    public static Bitmap getbitmap(Context context,String imageUri) {
+        Log.v(WechatUtils.class.getSimpleName(), "getbitmap:" + imageUri);
+        // 显示网络上的图片
+        String fileName = createShareFile(context);
+        try {
+            URL myFileUrl = new URL(imageUri);
+            HttpURLConnection conn = (HttpURLConnection) myFileUrl
+                    .openConnection();
+            conn.setDoInput(true);
+            conn.connect();
+            InputStream is = conn.getInputStream();
+
+            File file = new File(fileName);
+            FileOutputStream outputStream = new FileOutputStream(file);
+            int len = 0;
+            byte[] bs = new byte[1024];
+            while ((len = is.read(bs)) != -1) {
+                outputStream.write(bs, 0, len);
+            }
+
+            is.close();
+            Log.v(WechatUtils.class.getSimpleName(), "image download finished." + imageUri);
+        } catch (OutOfMemoryError e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.v(WechatUtils.class.getSimpleName(), "getbitmap bmp fail---");
+        }
+        return extractThumbNail(fileName, 200, 200, false);
+    }
+
+    private static final int MAX_DECODE_PICTURE_SIZE = 1920 * 1440;
+    private static final String TAG = "extractThumbNail";
+
+    public static Bitmap extractThumbNail(final String path, final int height, final int width, final boolean crop) {
+        Assert.assertTrue(path != null && !path.equals("") && height > 0 && width > 0);
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+
+        try {
+            options.inJustDecodeBounds = true;
+            Bitmap tmp = BitmapFactory.decodeFile(path, options);
+            if (tmp != null) {
+                tmp.recycle();
+                tmp = null;
+            }
+
+            Log.d(TAG, "extractThumbNail: round=" + width + "x" + height + ", crop=" + crop);
+            final double beY = options.outHeight * 1.0 / height;
+            final double beX = options.outWidth * 1.0 / width;
+            Log.d(TAG, "extractThumbNail: extract beX = " + beX + ", beY = " + beY);
+            options.inSampleSize = (int) (crop ? (beY > beX ? beX : beY) : (beY < beX ? beX : beY));
+            if (options.inSampleSize <= 1) {
+                options.inSampleSize = 1;
+            }
+
+            // NOTE: out of memory error
+            while (options.outHeight * options.outWidth / options.inSampleSize > MAX_DECODE_PICTURE_SIZE) {
+                options.inSampleSize++;
+            }
+
+            int newHeight = height;
+            int newWidth = width;
+            if (crop) {
+                if (beY > beX) {
+                    newHeight = (int) (newWidth * 1.0 * options.outHeight / options.outWidth);
+                } else {
+                    newWidth = (int) (newHeight * 1.0 * options.outWidth / options.outHeight);
+                }
+            } else {
+                if (beY < beX) {
+                    newHeight = (int) (newWidth * 1.0 * options.outHeight / options.outWidth);
+                } else {
+                    newWidth = (int) (newHeight * 1.0 * options.outWidth / options.outHeight);
+                }
+            }
+
+            options.inJustDecodeBounds = false;
+
+            Log.i(TAG, "bitmap required size=" + newWidth + "x" + newHeight + ", orig=" + options.outWidth + "x" + options.outHeight + ", sample=" + options.inSampleSize);
+            Bitmap bm = BitmapFactory.decodeFile(path, options);
+            if (bm == null) {
+                Log.e(TAG, "bitmap decode failed");
+                return null;
+            }
+
+            Log.i(TAG, "bitmap decoded size=" + bm.getWidth() + "x" + bm.getHeight());
+            final Bitmap scale = Bitmap.createScaledBitmap(bm, newWidth, newHeight, true);
+            if (scale != null) {
+                bm.recycle();
+                bm = scale;
+            }
+
+            if (crop) {
+                final Bitmap cropped = Bitmap.createBitmap(bm, (bm.getWidth() - width) >> 1, (bm.getHeight() - height) >> 1, width, height);
+                if (cropped == null) {
+                    return bm;
+                }
+
+                bm.recycle();
+                bm = cropped;
+                Log.i(TAG, "bitmap croped size=" + bm.getWidth() + "x" + bm.getHeight());
+            }
+            return bm;
+
+        } catch (final OutOfMemoryError e) {
+            Log.e(TAG, "decode bitmap failed: " + e.getMessage());
+            options = null;
+        }
+
+        return null;
+    }
+
+    /**
+     * 创建分享的头像照片保存路径
+     */
+    public static String createShareFile(Context context) {
+        String path = "";
+        File file = null;
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            file = new File(Environment.getExternalStorageDirectory().getPath() + File.separator + "kuxiuShareImg");
+        } else {
+            file = new File(context.getFilesDir().getPath() + File.separator + "kuxiuShareImg");
+        }
+        if (file != null) {
+            if (!file.exists()) {
+                file.mkdir();
+            }
+            File output = new File(file, System.currentTimeMillis() + ".png");
+            try {
+                if (output.exists()) {
+                    output.delete();
+                } else {
+                    output.createNewFile();
+                }
+                path = output.getAbsolutePath();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return path;
     }
 }
